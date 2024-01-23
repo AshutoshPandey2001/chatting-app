@@ -1,40 +1,75 @@
-import React from 'react'
+import { doc, onSnapshot } from "firebase/firestore";
+import React, { useContext, useEffect, useState } from "react";
+import { AuthContext } from "../context/AuthContext";
+import { ChatContext } from "../context/ChatContext";
+import { db } from "../firebase";
 
 const Chats = () => {
+    const [chats, setChats] = useState([]);
+    const { currentUser } = useContext(AuthContext);
+    const { dispatch } = useContext(ChatContext);
+
+
+    useEffect(() => {
+        const query = db
+            .collection('chats1')
+            .doc(currentUser.uid)
+            .collection('messages')
+        //   .orderBy('date', 'desc');
+        const subscriber = query.onSnapshot(querysnapshot => {
+            const allmessages = querysnapshot.docs.map(item => {
+                return { ...item.data() };
+            });
+            setChats(allmessages);
+        });
+        return () => subscriber();
+    }, [currentUser.uid]);
+    // useEffect(() => {
+    //     const getChats = () => {
+    //         const unsub = onSnapshot(doc(db, "userChats", currentUser.uid), (doc) => {
+    //             setChats(doc.data());
+    //         });
+
+    //         return () => {
+    //             unsub();
+    //         };
+    //     };
+
+    //     currentUser.uid && getChats();
+    // }, [currentUser.uid]);
+
+    const handleSelect = (u) => {
+        dispatch({ type: "CHANGE_USER", payload: u });
+    };
     return (
         <div className='chats'>
-            <div className='userChat'>
-                <img src='https://images.pexels.com/photos/16354646/pexels-photo-16354646/free-photo-of-city-road-fashion-people.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load' alt='' />
-                <div className='userChatInfo'>
-                    <span> Ashu</span>
-                    <p>hello</p>
-                </div>
+            {chats && chats.map((item, i) => (
+                <div className='userChat'
+                    key={i}
+                    onClick={() => handleSelect(item)}
+                >
+                    <img src={item.tophotoURL} alt="" />
+                    <div className='userChatInfo'>
+                        <span> {item.todisplayName}</span>
+                        <p>{item?.lastMessage}</p>
+                    </div>
 
-            </div>
-            <div className='userChat'>
-                <img src='https://images.pexels.com/photos/16354646/pexels-photo-16354646/free-photo-of-city-road-fashion-people.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load' alt='' />
-                <div className='userChatInfo'>
-                    <span> Ashu</span>
-                    <p>hello</p>
                 </div>
+            ))}
+            {/* {Object.entries(chats)?.sort((a, b) => b[1].date - a[1].date).map((chat) => (
+                <div className='userChat'
+                    key={chat[0]}
+                    onClick={() => handleSelect(chat[1].userInfo)}
+                >
+                    <img src={chat[1].userInfo.photoURL} alt="" />
+                    <div className='userChatInfo'>
+                        <span> {chat[1].userInfo.displayName}</span>
+                        <p>{chat[1].lastMessage?.text}</p>
+                    </div>
 
-            </div>
-            <div className='userChat'>
-                <img src='https://images.pexels.com/photos/16354646/pexels-photo-16354646/free-photo-of-city-road-fashion-people.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load' alt='' />
-                <div className='userChatInfo'>
-                    <span> Ashu</span>
-                    <p>hello</p>
                 </div>
+            ))} */}
 
-            </div>
-            <div className='userChat'>
-                <img src='https://images.pexels.com/photos/16354646/pexels-photo-16354646/free-photo-of-city-road-fashion-people.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load' alt='' />
-                <div className='userChatInfo'>
-                    <span> Ashu</span>
-                    <p>hello</p>
-                </div>
-
-            </div>
         </div>
     )
 }
